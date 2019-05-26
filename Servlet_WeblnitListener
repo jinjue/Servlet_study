@@ -1,0 +1,40 @@
+package servlet;
+
+import java.io.*;
+import java.util.*;
+import javax.servlet.*;
+import javax.servlet.annotation.WebListener;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+@WebServlet()
+public class WeblnitListener extends HttpServlet {
+	private List<AsyncContext> asyncs=new ArrayList<AsyncContext>();
+	public void contextInitialized(ServletContextEvent sce){
+		sce.getServletContext().setAttribute("asyncs",asyncs);
+		new Thread(new Runnable(){
+			public void run(){
+				while (true){
+					try{
+						Thread.sleep((int) (Math.random()*10000));
+						double num=Math.random()*10;
+						synchronized(asyncs){
+							for(AsyncContext ctx:asyncs){
+								ctx.getResponse().getWriter().println(num);
+								ctx.complete();
+							}
+							asyncs.clear();
+						}
+					}
+					catch(Exception e){
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		}).start();
+	}
+	public void contextDestroyed(ServletContextEvent sce){}
+
+}
